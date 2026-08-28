@@ -1,40 +1,45 @@
+name: Generate Windows ISO from UUP File
+
+run-name: ${{ inputs.custom_name || 'Generate Windows ISO from UUP File' }}
+
 on:
   workflow_dispatch:
     inputs:
       file_url:
         description: 'URL of the UUPdump file to download'
         required: true
+        type: string
+
       custom_name:
         description: 'Custom display name for this run'
         required: false
         default: ''
+        type: string
 
 jobs:
   generate_windows_iso:
-    name: ${{ github.event.inputs.custom_name || 'generate_windows_iso' }}
+    name: ${{ inputs.custom_name || 'generate_windows_iso' }}
     runs-on: windows-2025-vs2026
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+    - name: Checkout repository
+      uses: actions/checkout@v6
 
-      - name: Download UUP file
-        run: |
-          $url = "${{ github.event.inputs.file_url }}"
-          Write-Host "Downloading UUP file from URL: $url"
-          curl -L -o uupdump.zip $url
+    - name: Download UUP file
+      run: |
+        $url = "${{ github.event.inputs.file_url }}"
+        Write-Host "Downloading UUP file from URL: $url"
+        curl -L -o uupdump.zip $url
 
-      - name: Generate Windows ISO
-        run: |
-          Expand-Archive -Path uupdump.zip -DestinationPath uupdump
-          Move-Item -Path ".\get_aria2.ps1" -Destination ".\uupdump\files\" -Force
-          cd uupdump
-          Write-Host "Running UUP download script"
-          echo "q" | .\uup_download_windows.cmd
+    - name: Generate Windows ISO
+      run: |
+        Expand-Archive -Path uupdump.zip -DestinationPath uupdump
+        Move-Item -Path ".\get_aria2.ps1" -Destination ".\uupdump\files\" -Force
+        cd uupdump
+        Write-Host "Running UUP download script"
+        echo "q" | .\uup_download_windows.cmd
 
-      - name: Upload generated ISO as artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ github.event.inputs.custom_name || 'generate' }}-${{ github.run_number }}
-          path: uupdump/*.ISO
-
+    - name: Upload generated ISO as artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: generate
+        path: uupdump/*.ISO
